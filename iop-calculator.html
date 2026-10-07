@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EyePlumBer IOP Calculator • CCT-Adjusted Intraocular Pressure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root { --primary: #00d4ff; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a2e, #1a1a4e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calculator {
+            position: relative;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(0,212,255,0.2);
+            width: 100%;
+            max-width: 640px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgb(0 212 255 / 0.15);
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 32px;
+            font-size: 1.05rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 560px) {
+            .input-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 1.7rem; }
+            .adjusted-value { font-size: 2.6rem !important; }
+        }
+
+        .input-group { position: relative; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #ccc;
+        }
+
+        input, select {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            font-size: 1.2rem;
+            color: #fff;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0,212,255,0.2);
+        }
+
+        select option { color: #111; }
+
+        .unit {
+            position: absolute;
+            right: 20px;
+            top: 50px;
+            color: #888;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .method-select { margin-bottom: 24px; }
+
+        .result {
+            background: rgba(0,212,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 2px solid var(--primary);
+            margin: 24px 0;
+        }
+
+        .adjusted-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            line-height: 1;
+            color: var(--primary);
+        }
+
+        .correction {
+            font-size: 1.05rem;
+            color: #ccc;
+            margin-top: 10px;
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: #000;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover { filter: brightness(1.08); }
+
+        .disclaimer {
+            font-size: 0.82rem;
+            color: #888;
+            line-height: 1.5;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .formula-box {
+            background: rgba(255,255,255,0.05);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            margin-top: 14px;
+            white-space: pre-wrap;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            text-align: left;
+            color: #ddd;
+        }
+
+        .all-methods {
+            margin-top: 8px;
+            text-align: left;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .all-methods div {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 4px 0;
+        }
+
+        .penguin {
+            position: absolute;
+            top: -16px;
+            right: -8px;
+            font-size: 2.4rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <span class="penguin">🐧</span>
+        <h1>EyePlumBer IOP Calculator</h1>
+        <p class="subtitle">Goldmann tonometry adjusted for central corneal thickness</p>
+
+        <div class="input-grid">
+            <div class="input-group">
+                <label for="measured">Measured IOP</label>
+                <input type="number" id="measured" value="16" step="0.1" min="0" max="80">
+                <span class="unit">mmHg</span>
+            </div>
+            <div class="input-group">
+                <label for="cct">Central corneal thickness</label>
+                <input type="number" id="cct" value="545" step="1" min="300" max="800">
+                <span class="unit">μm</span>
+            </div>
+        </div>
+
+        <div class="method-select">
+            <label for="method">Primary correction method</label>
+            <select id="method">
+                <option value="table">Table interpolation (common clinical chart, ref 545 μm)</option>
+                <option value="linear">Linear 0.7 mmHg per 10 μm from 545 μm</option>
+                <option value="ehlers">Ehlers formula (ref ~520 μm)</option>
+                <option value="kohlhaas">Kohlhaas formula</option>
+            </select>
+        </div>
+
+        <button type="button" id="calcBtn">Calculate adjusted IOP</button>
+
+        <div id="result" class="result" hidden>
+            <div style="margin-bottom: 8px; font-size: 0.95rem; color: #aaa;">Adjusted IOP</div>
+            <div id="adjusted" class="adjusted-value">—</div>
+            <div id="correction-text" class="correction"></div>
+            <div id="formula-display" class="formula-box"></div>
+            <div id="all-methods" class="all-methods"></div>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Educational reference only.</strong>
+            CCT-based IOP correction is an approximation. Corneal hysteresis and other biomechanics can matter as much as thickness. Do not base treatment on this tool alone.
+            Built for eyePlumBer, MD.
+        </div>
+    </div>
+
+    <script>
+        const iopTable = {
+            445: 7, 455: 6, 465: 6,
+            475: 5, 485: 4, 495: 4,
+            505: 3, 515: 2, 525: 1,
+            535: 1, 545: 0, 555: -1,
+            565: -1, 575: -2, 585: -3,
+            595: -4, 605: -4, 615: -5,
+            625: -6, 635: -6, 645: -7
+        };
+
+        function interpolateTable(cct) {
+            const keys = Object.keys(iopTable).map(Number).sort((a, b) => a - b);
+            if (cct <= keys[0]) return iopTable[keys[0]];
+            if (cct >= keys[keys.length - 1]) return iopTable[keys[keys.length - 1]];
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (cct >= keys[i] && cct <= keys[i + 1]) {
+                    const low = keys[i];
+                    const high = keys[i + 1];
+                    const t = (cct - low) / (high - low);
+                    return iopTable[low] + t * (iopTable[high] - iopTable[low]);
+                }
+            }
+            return 0;
+        }
+
+        function corrections(measured, cct) {
+            const ehlers = -5.0 * (((cct / 1000) - 0.520) / 0.070);
+            const kohlhaas = 23.28 - (0.0423 * cct);
+            return {
+                table: interpolateTable(cct),
+                linear: (545 - cct) * 0.07,
+                ehlers,
+                kohlhaas
+            };
+        }
+
+        const labels = {
+            table: "Table interpolation",
+            linear: "Linear 0.7 / 10 μm",
+            ehlers: "Ehlers",
+            kohlhaas: "Kohlhaas"
+        };
+
+        function formulaText(method, cct, correction) {
+            if (method === "table") {
+                return "CCT " + cct + " μm → table adjustment " + correction.toFixed(2) + " mmHg (interpolated from the common clinical chart, zero at 545 μm).";
+            }
+            if (method === "linear") {
+                return "Correction = (545 − " + cct + ") × 0.07 = " + correction.toFixed(2) + " mmHg.";
+            }
+            if (method === "ehlers") {
+                return "Ehlers: measured − [5.0 × ((CCT/1000 − 0.520) / 0.070)] → correction " + correction.toFixed(2) + " mmHg.";
+            }
+            return "Kohlhaas: correction = 23.28 − 0.0423 × " + cct + " = " + correction.toFixed(2) + " mmHg.";
+        }
+
+        function calculateIOP() {
+            const measured = parseFloat(document.getElementById("measured").value);
+            const cct = parseFloat(document.getElementById("cct").value);
+            const method = document.getElementById("method").value;
+            if (!Number.isFinite(measured) || !Number.isFinite(cct)) return;
+
+            const all = corrections(measured, cct);
+            const correction = all[method];
+            const adjusted = measured + correction;
+
+            const result = document.getElementById("result");
+            result.hidden = false;
+            document.getElementById("adjusted").textContent = adjusted.toFixed(1);
+            document.getElementById("correction-text").innerHTML =
+                "<strong>" + labels[method] + "</strong><br>Measured " + measured.toFixed(1) +
+                " mmHg · correction " + (correction >= 0 ? "+" : "") + correction.toFixed(1) + " mmHg";
+            document.getElementById("formula-display").textContent = formulaText(method, cct, correction);
+
+            const lines = Object.keys(all).map(function (key) {
+                const adj = measured + all[key];
+                const mark = key === method ? " ← selected" : "";
+                return "<div><span>" + labels[key] + mark + "</span><span>" + adj.toFixed(1) + " mmHg</span></div>";
+            }).join("");
+            document.getElementById("all-methods").innerHTML = "<div style='margin:12px 0 4px;color:#888'>All methods</div>" + lines;
+        }
+
+        document.getElementById("calcBtn").addEventListener("click", calculateIOP);
+        document.getElementById("measured").addEventListener("input", calculateIOP);
+        document.getElementById("cct").addEventListener("input", calculateIOP);
+        document.getElementById("method").addEventListener("change", calculateIOP);
+        calculateIOP();
+    </script>
+</body>
+</html>
